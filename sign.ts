@@ -1,21 +1,21 @@
 import CryptoJS from "crypto-js";
 
-// The api requires a "sign" key to be passed in the headers
-// The sign key is bascially a hash of the headers and a hardcoded secret
-// This function generates the sign key from the headers
+// The api requires a "sign" key to be passed in the post body
+// The sign key is bascially a hash of the post body and a hardcoded secret
+// This function generates the sign key from the post body
 // Most of the code is directly copied from the api
 
-function getSignKey(headersObject: { [key: string]: any }) {
+function getSignKey(postBodyObject: { [key: string]: any }) {
   const crypto = CryptoJS;
   const headersList: string[] = [];
   let index = 0;
 
-  for (let key in headersObject) {
+  for (let key in postBodyObject) {
     if (
-      headersObject[key] !== "" &&
-      headersObject[key] !== undefined &&
-      typeof headersObject[key] !== "boolean" &&
-      headersObject[key] !== null
+      postBodyObject[key] !== "" &&
+      postBodyObject[key] !== undefined &&
+      typeof postBodyObject[key] !== "boolean" &&
+      postBodyObject[key] !== null
     ) {
       headersList[index] = key;
       index++;
@@ -28,10 +28,10 @@ function getSignKey(headersObject: { [key: string]: any }) {
   // Build the query string
   for (let index in sortedKeys) {
     const currentKey = sortedKeys[index];
-    if (Array.isArray(headersObject[currentKey])) {
+    if (Array.isArray(postBodyObject[currentKey])) {
       queryString += currentKey + "=Array&";
     } else {
-      queryString += currentKey + "=" + headersObject[currentKey] + "&";
+      queryString += currentKey + "=" + postBodyObject[currentKey] + "&";
     }
   }
 
