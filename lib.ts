@@ -18,10 +18,10 @@ export async function discordMessage(
     return;
   }
   let errorMessage = "";
-  if (errorCode === "50" && status === "1") {
-    // Sinkhole notification
-    return;
-  }
+  // if (errorCode === "50" && status === "1") {
+  //   // Sinkhole notification
+  //   return;
+  // }
   switch (errorCode) {
     case "2":
       errorMessage =
@@ -32,7 +32,7 @@ export async function discordMessage(
     case "50":
       errorMessage =
         status === "1"
-          ? "🔋  Battery Charging Started  🔋"
+          ? "🔋  Battery is now alive  🔋"
           : "🪫  Low battery - Everything is on grid now  🪫";
       break;
 
