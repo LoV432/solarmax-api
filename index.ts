@@ -3,14 +3,16 @@ import {
   getToken,
   getLogs,
   getBatteryPercent,
-  discordMessage,
+  discordBatteryMessage,
+  discordLogsMessage,
   convertToUTC,
 } from "./lib";
 
 let globals = {
   lastBatterySOC: 0,
   lastLogDate: DateTime.now().toUTC(),
-}
+  batterSOCThresholds: [45, 65, 85, 100]
+};
 
 async function main() {
   const token = await getToken();
@@ -41,71 +43,33 @@ async function execLogs(token: string) {
       //   logDate
       // );
       globals.lastLogDate = logDate;
-      await discordMessage(log.ErrorCode, log.status, logDate.toISO());
+      await discordLogsMessage(log.ErrorCode, log.status);
     }
   }
 }
 
 async function execBattery(token: string) {
   const { SOC } = await getBatteryPercent(token);
-  const numberSOC = Number(SOC);
-  //console.log(globals.lastBatterySOC, numberSOC);
-  if (globals.lastBatterySOC === -1 || globals.lastBatterySOC === numberSOC) {
+  const currentSOC = Number(SOC);
+  //console.log(globals.lastBatterySOC, currentSOC);
+  if (currentSOC === -1 || globals.lastBatterySOC === currentSOC) {
     return;
   }
-  if (globals.lastBatterySOC < 100 && numberSOC >= 100) {
-    await discordMessage(
-      "50.5",
-      "1",
-      DateTime.now().toISO(),
-      `Battery SOC: ${numberSOC}%`
-    );
-    // Charged back to 100%
+
+  if (currentSOC > globals.lastBatterySOC) {
+    for (const threshold of globals.batterSOCThresholds) {
+      if (currentSOC >= threshold && globals.lastBatterySOC < threshold) {
+        await discordBatteryMessage(currentSOC, threshold, "1");
+      }
+    }
   }
-  if (globals.lastBatterySOC === 100 && numberSOC < 100) {
-    await discordMessage(
-      "50.6",
-      "0",
-      DateTime.now().toISO(),
-      `Battery SOC: ${numberSOC}%`
-    );
-    // Charging dropped below 100%
+  else {
+    const reversedThresholds = [...globals.batterSOCThresholds].reverse();
+    for (const threshold of reversedThresholds) {
+      if (currentSOC < threshold && globals.lastBatterySOC >= threshold) {
+        await discordBatteryMessage(currentSOC, threshold, "0");
+      }
+    }
   }
-  if (globals.lastBatterySOC < 85 && numberSOC >= 85) {
-    await discordMessage(
-      "50.4",
-      "1",
-      DateTime.now().toISO(),
-      `Battery SOC: ${numberSOC}%`
-    );
-    // Charged back to 85%
-  }
-  if (globals.lastBatterySOC > 85 && numberSOC <= 85) {
-    await discordMessage(
-      "50.1",
-      "0",
-      DateTime.now().toISO(),
-      `Battery SOC: ${numberSOC}%`
-    );
-    // Charging dropped below 85%
-  }
-  if (globals.lastBatterySOC < 65 && numberSOC >= 65) {
-    await discordMessage(
-      "50.3",
-      "1",
-      DateTime.now().toISO(),
-      `Battery SOC: ${numberSOC}%`
-    );
-    // Charged back to 65%
-  }
-  if (globals.lastBatterySOC > 65 && numberSOC <= 65) {
-    await discordMessage(
-      "50.2",
-      "0",
-      DateTime.now().toISO(),
-      `Battery SOC: ${numberSOC}%`
-    );
-    // Charging dropped below 65%
-  }
-  globals.lastBatterySOC = numberSOC;
+  globals.lastBatterySOC = currentSOC;
 }

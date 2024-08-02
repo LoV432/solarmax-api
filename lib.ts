@@ -7,52 +7,54 @@ dotenv.config();
 const { USERNAME, PASSWORD, GOODSTYPEID, GOODSID, TIMEZONE, DISCORD_WEBHOOK } =
   process.env;
 
-export async function discordMessage(
-  errorCode: string,
-  status: string,
-  time: string,
-  extra = ""
+export async function discordBatteryMessage(
+  currentSOC: number,
+  thresholdSOC: number,
+  status: string
 ) {
   if (!DISCORD_WEBHOOK) {
     console.log("No discord webhook set");
     return;
   }
   let errorMessage = "";
-  // if (errorCode === "50" && status === "1") {
-  //   // Sinkhole notification
-  //   return;
-  // }
+  if (status === "1") {
+    errorMessage = `🔋 Battery reached back to ${thresholdSOC}%`;
+  } else {
+    errorMessage = `🪫 Battery dropped below ${thresholdSOC}%`;
+  }
+
+  const options = {
+    method: "POST",
+    body: `${errorMessage}\n\n     Current Battery SOC: ${currentSOC}%`,
+    headers: {
+      Title: `SolarMax - Battery Update`,
+      Priority: "default",
+    },
+  };
+
+  await safeFetch(DISCORD_WEBHOOK, options);
+  console.log(JSON.stringify(options));
+}
+
+export async function discordLogsMessage(errorCode: string, status: string) {
+  if (!DISCORD_WEBHOOK) {
+    console.log("No discord webhook set");
+    return;
+  }
+  let errorMessage = "";
   switch (errorCode) {
     case "2":
       errorMessage =
         status === "1"
-          ? "⚡️✅  Grid power outage ended  ✅⚡️"
-          : "⚡️❌  Gird power outage started - Everything is on UPS now  ❌⚡️";
+          ? "⚡️✅ Grid power outage ended"
+          : "⚡️❌ Gird power outage started - Everything is on UPS now";
       break;
+
     case "50":
       errorMessage =
         status === "1"
-          ? "🔋  Battery is now alive  🔋"
-          : "🪫  Low battery - Everything is on grid now  🪫";
-      break;
-
-    case "50.1":
-      errorMessage = `🪫  Battery dropped below 85%  🪫`;
-      break;
-    case "50.2":
-      errorMessage = `🪫  Battery dropped below 65%  🪫`;
-      break;
-    case "50.3":
-      errorMessage = `🔋  Battery reached back to 65%  🔋`;
-      break;
-    case "50.4":
-      errorMessage = `🔋  Battery reached back to 85%  🔋`;
-      break;
-    case "50.5":
-      errorMessage = `🔋  Battery reached back to 100%  🔋`;
-      break;
-    case "50.6":
-      errorMessage = `🪫  Battery dropped below 100%  🪫`;
+          ? "🔋 Battery is now alive"
+          : "🪫 Low battery - Everything is on grid now";
       break;
 
     default:
@@ -63,27 +65,17 @@ export async function discordMessage(
       break;
   }
 
-  const body = {
-    embeds: [
-      {
-        author: {
-          name: "SolarMax",
-        },
-        title: errorMessage,
-        description: extra,
-        color: status === "1" ? 5763719 : 15548997,
-        timestamp: time,
-      },
-    ],
+  const options = {
+    method: "POST",
+    body: `${errorMessage}`,
+    headers: {
+      Title: `SolarMax - Notification`,
+      Priority: "default",
+    },
   };
 
-  await safeFetch(DISCORD_WEBHOOK, {
-    body: JSON.stringify(body),
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  await safeFetch(DISCORD_WEBHOOK, options);
+  console.log(JSON.stringify(options));
 }
 
 export async function getToken() {
