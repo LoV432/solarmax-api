@@ -9,7 +9,7 @@ import {
 } from "./lib";
 
 let globals = {
-  lastBatterySOC: 0,
+  lastBatterySOC: -1,
   lastLogDate: DateTime.now().toUTC(),
   batterSOCThresholds: [45, 65, 85, 100]
 };
@@ -43,7 +43,7 @@ async function execLogs(token: string) {
       //   logDate
       // );
       globals.lastLogDate = logDate;
-      await discordLogsMessage(log.ErrorCode, log.status);
+      await discordLogsMessage(log.ErrorCode, log.status, log.Time);
     }
   }
 }
@@ -53,6 +53,10 @@ async function execBattery(token: string) {
   const currentSOC = Number(SOC);
   //console.log(globals.lastBatterySOC, currentSOC);
   if (currentSOC === -1 || globals.lastBatterySOC === currentSOC) {
+    return;
+  }
+  if (globals.lastBatterySOC === -1) {
+    globals.lastBatterySOC = currentSOC;
     return;
   }
 
