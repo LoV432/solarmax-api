@@ -36,11 +36,12 @@ export async function discordBatteryMessage(
   console.log(JSON.stringify(options));
 }
 
-export async function discordLogsMessage(errorCode: string, status: string) {
+export async function discordLogsMessage(errorCode: string, status: string, timestamp: string) {
   if (!DISCORD_WEBHOOK) {
     console.log("No discord webhook set");
     return;
   }
+  const time = DateTime.fromFormat(timestamp, "yyyy-MM-dd HH:mm:ss", { zone: TIMEZONE }).toLocaleString(DateTime.DATETIME_MED);
   let errorMessage = "";
   switch (errorCode) {
     case "2":
@@ -67,7 +68,7 @@ export async function discordLogsMessage(errorCode: string, status: string) {
 
   const options = {
     method: "POST",
-    body: `${errorMessage}`,
+    body: `${errorMessage}\n\n     Time: ${time}`,
     headers: {
       Title: `SolarMax - Notification`,
       Priority: "default",
