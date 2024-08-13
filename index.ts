@@ -11,7 +11,7 @@ import {
 let globals = {
   lastBatterySOC: -1,
   lastLogDate: DateTime.now().toUTC(),
-  batterSOCThresholds: [45, 65, 85, 100]
+  batterSOCThresholds: [45, 65, 85, 95]
 };
 
 async function main() {
