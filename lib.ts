@@ -115,14 +115,14 @@ export async function getLogs(token: string) {
   const body = {
     sign: getSignKey({
       MemberID: USERNAME,
-      GoodsTypeId: Number(GOODSTYPEID),
-      selectType: 1,
+      GoodsID: GOODSID,
+      selectType: 2,
       SDate: date,
       EDate: date,
     }),
     MemberID: USERNAME,
-    GoodsTypeId: Number(GOODSTYPEID),
-    selectType: 1,
+    GoodsID: GOODSID,
+    selectType: 2,
     SDate: date,
     EDate: date,
   };
