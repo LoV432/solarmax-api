@@ -3,20 +3,27 @@ import {
   getToken,
   getLogs,
   getBatteryPercent,
+  getHealthCheck,
   discordBatteryMessage,
   discordLogsMessage,
   convertToUTC,
+  discordHealthCheckMessage,
 } from "./lib";
+import dotenv from "dotenv";
+dotenv.config();
+const { TIMEZONE } = process.env;
 
 let globals = {
   lastBatterySOC: -1,
   lastLogDate: DateTime.now().toUTC(),
-  batterSOCThresholds: [45, 65, 85, 95]
+  batterSOCThresholds: [45, 65, 85, 95],
+  lastHealthCheckStatus: true,
 };
 
 async function main() {
   const token = await getToken();
   while (true) {
+    await execHealthCheck(token);
     await execLogs(token);
     await execBattery(token);
     await new Promise((resolve) => setTimeout(resolve, 1000 * 60));
@@ -76,4 +83,24 @@ async function execBattery(token: string) {
     }
   }
   globals.lastBatterySOC = currentSOC;
+}
+
+async function execHealthCheck(token: string) {
+  const healthCheckData = await getHealthCheck(token);
+  if (healthCheckData["AllGroupList"].length === 0) {
+    console.log("No LastUpdate Data");
+    return false;
+  }
+  const lastUpdated = DateTime.fromFormat(
+    // TODO: This is hardcoded to select first solar in the group. Make it more dynamic?
+    healthCheckData["AllGroupList"][0].LastUpdate,
+    "yyyy-MM-dd HH:mm:ss",
+    { zone: TIMEZONE }
+  );
+  const currentHealthCheckStatus = lastUpdated.diffNow("minutes").minutes < 10;
+  if (currentHealthCheckStatus === globals.lastHealthCheckStatus) {
+    return;
+  }
+  globals.lastHealthCheckStatus = currentHealthCheckStatus;
+  await discordHealthCheckMessage(currentHealthCheckStatus ? "🟢 Solar Wifi Connected" : "🔴 Solar Wifi Disconnected");
 }

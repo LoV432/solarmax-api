@@ -1,11 +1,18 @@
 import getSignKey from "./sign";
 import { DateTime } from "luxon";
 import { errorCodes } from "./errorCodes";
-import type { Logs, Battery } from "./types.d.ts";
+import type { Logs, Battery, HealthCheck } from "./types.d.ts";
 import dotenv from "dotenv";
 dotenv.config();
-const { USERNAME, PASSWORD, GOODSTYPEID, GOODSID, TIMEZONE, DISCORD_WEBHOOK } =
-  process.env;
+const {
+  USERNAME,
+  PASSWORD,
+  GOODSTYPEID,
+  GOODSID,
+  MEMBERAUTOID,
+  TIMEZONE,
+  DISCORD_WEBHOOK,
+} = process.env;
 
 export async function discordBatteryMessage(
   currentSOC: number,
@@ -36,12 +43,18 @@ export async function discordBatteryMessage(
   console.log(JSON.stringify(options));
 }
 
-export async function discordLogsMessage(errorCode: string, status: string, timestamp: string) {
+export async function discordLogsMessage(
+  errorCode: string,
+  status: string,
+  timestamp: string
+) {
   if (!DISCORD_WEBHOOK) {
     console.log("No discord webhook set");
     return;
   }
-  const time = DateTime.fromFormat(timestamp, "yyyy-MM-dd HH:mm:ss", { zone: TIMEZONE }).toLocaleString(DateTime.DATETIME_MED);
+  const time = DateTime.fromFormat(timestamp, "yyyy-MM-dd HH:mm:ss", {
+    zone: TIMEZONE,
+  }).toLocaleString(DateTime.DATETIME_MED);
   let errorMessage = "";
   switch (errorCode) {
     case "2":
@@ -177,6 +190,55 @@ export async function getBatteryPercent(token: string) {
   const requestBody = (await request.response.json()) as Battery;
   //console.log(requestBody);
   return requestBody;
+}
+
+export async function getHealthCheck(token: string) {
+  const body = {
+    sign: getSignKey({
+      MemberAutoID: MEMBERAUTOID,
+      inputValue: "",
+    }),
+    MemberAutoID: MEMBERAUTOID,
+    inputValue: "",
+  };
+
+  const fetchBody = {
+    headers: {
+      authorization: token,
+      "content-type": "application/json",
+      Cookie: `timezone=${TIMEZONE}`,
+    },
+    body: JSON.stringify(body),
+    method: "POST",
+  };
+  const request = await safeFetch(
+    "https://www.cloudinverter.net/dist/server/api/CodeIgniter/index.php/Senergytec/web/v2/Inverterapi/GroupList",
+    fetchBody
+  );
+  if (!request.success) {
+    return { "AllGroupList": [] };
+  }
+  const requestBody = (await request.response.json()) as HealthCheck;
+  //console.log(requestBody);
+  return requestBody;
+}
+
+export async function discordHealthCheckMessage(status: string) {
+  if (!DISCORD_WEBHOOK) {
+    console.log("No discord webhook set");
+    return;
+  }
+  const options = {
+    method: "POST",
+    body: `${status}`,
+    headers: {
+      Title: `SolarMax - Health Check`,
+      Priority: "default",
+    },
+  };
+
+  await safeFetch(DISCORD_WEBHOOK, options);
+  console.log(JSON.stringify(options));
 }
 
 export function convertToUTC(dateTimeString: string) {

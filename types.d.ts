@@ -30,3 +30,35 @@ export type Battery = {
   hybridWorkMode: string;
   display: string;
 };
+
+
+export type HealthCheck = {
+  "AllGroupList": 
+      {
+          "InverterStatus": {
+              "Green": number,
+              "yellow": number,
+              "red": number,
+              "gray": number
+          },
+          "AutoID": string,
+          "GoodsTypeName": string,
+          "GreenPercent": number,
+          "Light": number,
+          "CurrPac": number,
+          "EToday": number,
+          "Htotal": number,
+          "Price": string,
+          "GoodsKWP": number,
+          "effect": number,
+          "CreateDate": string,
+          "SetUpTime": string,
+          "LastUpdate": string,
+          "view": true,
+          "Inv": number,
+          "GoodsTypePicName": null,
+          "checkPlantType": string,
+          "ETotal": number,
+          "Unit": string
+      } []
+}
