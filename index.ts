@@ -51,6 +51,10 @@ async function execLogs(token: string) {
       // );
       globals.lastLogDate = logDate;
       await discordLogsMessage(log.ErrorCode, log.status, log.Time);
+      // Wait for 3 seconds before sending another message.
+      // The messages currently are sent out of order.
+      // This might fix it.
+      await new Promise((resolve) => setTimeout(resolve, 3000));
     }
   }
 }
