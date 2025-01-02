@@ -70,6 +70,10 @@ export async function discordLogsMessage(
           ? "🔋 Battery is now alive"
           : "🪫 Low battery - Everything is on grid now";
       break;
+    
+      case "1": // A1-Grid under voltage
+      case "4": // A4-Grid under frequency
+        break;
 
     default:
       errorMessage =
