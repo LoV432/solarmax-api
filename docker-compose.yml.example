@@ -1,0 +1,15 @@
+services:
+  solarmax-api:
+    image: lov432/solarmaxapi:latest
+    container_name: solarmaxapi
+    restart: unless-stopped
+    environment:
+      - USERNAME=
+      - PASSWORD=
+      - GOODSTYPEID=
+      - GOODSID=
+      - MEMBERAUTOID=
+      - TIMEZONE=Asia/Karachi
+      - DISCORD_WEBHOOK=
+    dns: 
+      - 1.1.1.1
