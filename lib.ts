@@ -14,6 +14,8 @@ const {
   DISCORD_WEBHOOK,
 } = process.env;
 
+const SKIPPED_ERROR_CODES = ["1", "4"];
+
 export async function discordBatteryMessage(
   currentSOC: number,
   thresholdSOC: number,
@@ -52,6 +54,10 @@ export async function discordLogsMessage(
     console.log("No discord webhook set");
     return;
   }
+  if (SKIPPED_ERROR_CODES.includes(errorCode)) {
+    console.log("Skipping error code", { errorCode, status, timestamp });
+    return;
+  }
   const time = DateTime.fromFormat(timestamp, "yyyy-MM-dd HH:mm:ss", {
     zone: TIMEZONE,
   }).toLocaleString(DateTime.DATETIME_MED);
@@ -70,16 +76,12 @@ export async function discordLogsMessage(
           ? "🔋 Battery is now alive"
           : "🪫 Low battery - Everything is on grid now";
       break;
-    
-      case "1": // A1-Grid under voltage
-      case "4": // A4-Grid under frequency
-        break;
 
     default:
       errorMessage =
         status === "1"
-          ? `${errorCodes[errorCode]} inactive`
-          : `${errorCodes[errorCode]} active`;
+          ? `${errorCodes[parseInt(errorCode) as keyof typeof errorCodes]} inactive`
+          : `${errorCodes[parseInt(errorCode) as keyof typeof errorCodes]} active`;
       break;
   }
 
@@ -88,7 +90,7 @@ export async function discordLogsMessage(
     body: `${errorMessage}\n\n     Time: ${time}`,
     headers: {
       Title: `SolarMax - Notification`,
-      Priority: "default",
+      Priority: errorCode === "2" ? "high" : "default",
     },
   };
 
@@ -271,6 +273,6 @@ async function safeFetch(url: string, options: RequestInit) {
     return { success: true as const, response };
   } catch (error) {
     console.error(error);
-    return { success: false as const, error: error.message };
+    return { success: false as const, error: error };
   }
 }
