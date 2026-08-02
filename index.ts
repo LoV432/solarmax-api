@@ -37,7 +37,7 @@ async function execLogs(token: string) {
   if (!logs.infoerror) {
     return;
   }
-  const logsReversed = logs.infoerror.reverse();
+  const logsReversed = logs.infoerror.toReversed();
   for (const log of logsReversed) {
     const logDate = convertToUTC(log.Time);
     if (!logDate) {
@@ -49,7 +49,6 @@ async function execLogs(token: string) {
       //   log.status === "1" ? "Inactive" : "Active",
       //   logDate
       // );
-      globals.lastLogDate = logDate;
       await discordLogsMessage(log.ErrorCode, log.status, log.Time);
       // Wait for 3 seconds before sending another message.
       // The messages currently are sent out of order.
@@ -57,6 +56,8 @@ async function execLogs(token: string) {
       await new Promise((resolve) => setTimeout(resolve, 3000));
     }
   }
+  const lastLogDate = convertToUTC(logs.infoerror[0].Time);
+  globals.lastLogDate = lastLogDate ?? DateTime.now().toUTC();
 }
 
 async function execBattery(token: string) {
@@ -91,9 +92,10 @@ async function execBattery(token: string) {
 
 async function execHealthCheck(token: string) {
   const healthCheckData = await getHealthCheck(token);
-  if (healthCheckData["AllGroupList"].length === 0) {
-    console.log("No LastUpdate Data");
-    return false;
+  if (healthCheckData["AllGroupList"].length === 0 && globals.lastHealthCheckStatus === true) {
+    globals.lastHealthCheckStatus = false;
+    await discordHealthCheckMessage("🔴 Solar Wifi Disconnected");
+    return;
   }
   const lastUpdated = DateTime.fromFormat(
     // TODO: This is hardcoded to select first solar in the group. Make it more dynamic?
