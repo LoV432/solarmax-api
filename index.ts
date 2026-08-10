@@ -92,9 +92,8 @@ async function execBattery(token: string) {
 
 async function execHealthCheck(token: string) {
   const healthCheckData = await getHealthCheck(token);
-  if (healthCheckData["AllGroupList"].length === 0 && globals.lastHealthCheckStatus === true) {
-    globals.lastHealthCheckStatus = false;
-    await discordHealthCheckMessage("🔴 Solar Wifi Disconnected");
+  const isFailedCheck = healthCheckData["AllGroupList"].length === 0
+  if (isFailedCheck) {
     return;
   }
   const lastUpdated = DateTime.fromFormat(
@@ -103,7 +102,8 @@ async function execHealthCheck(token: string) {
     "yyyy-MM-dd HH:mm:ss",
     { zone: TIMEZONE }
   );
-  const currentHealthCheckStatus = lastUpdated.diffNow("minutes").minutes < 10;
+  const minutesSinceUpdate = DateTime.now().diff(lastUpdated, "minutes").minutes;
+  const currentHealthCheckStatus = minutesSinceUpdate < 10;
   if (currentHealthCheckStatus === globals.lastHealthCheckStatus) {
     return;
   }
