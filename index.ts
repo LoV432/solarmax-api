@@ -103,7 +103,7 @@ async function execHealthCheck(token: string) {
     { zone: TIMEZONE }
   );
   const minutesSinceUpdate = DateTime.now().diff(lastUpdated, "minutes").minutes;
-  const currentHealthCheckStatus = minutesSinceUpdate < 10;
+  const currentHealthCheckStatus = minutesSinceUpdate < 20;
   if (currentHealthCheckStatus === globals.lastHealthCheckStatus) {
     return;
   }
