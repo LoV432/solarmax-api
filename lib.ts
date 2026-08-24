@@ -12,6 +12,7 @@ const {
   MEMBERAUTOID,
   TIMEZONE,
   DISCORD_WEBHOOK,
+  DISCORD_HEALTH_WEBHOOK
 } = process.env;
 
 const SKIPPED_ERROR_CODES = ["1", "4"];
@@ -230,7 +231,7 @@ export async function getHealthCheck(token: string) {
 }
 
 export async function discordHealthCheckMessage(status: string) {
-  if (!DISCORD_WEBHOOK) {
+  if (!DISCORD_HEALTH_WEBHOOK && !DISCORD_WEBHOOK) {
     console.log("No discord webhook set");
     return;
   }
@@ -243,7 +244,7 @@ export async function discordHealthCheckMessage(status: string) {
     },
   };
 
-  await safeFetch(DISCORD_WEBHOOK, options);
+  await safeFetch(DISCORD_HEALTH_WEBHOOK || DISCORD_WEBHOOK || '', options);
   console.log(JSON.stringify(options));
 }
 
